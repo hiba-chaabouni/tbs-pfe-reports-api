@@ -1,0 +1,26 @@
+$kind: http-request
+name: E22 setup 1/2 - double-major student (201, or 409 if already there)
+description: Fixture for E22, so it never depends on Nour or on earlier folders.
+url: "{{base_url}}/students"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "student_id": "15937486",
+      "first_name": "Skander",
+      "last_name": "Bouazizi",
+      "double_major": 1,
+      "level": "senior"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      pm.test("Status is 201 or 409", function () { expect([201, 409]).to.include(pm.response.code); });
+    language: text/javascript
+order: 23000

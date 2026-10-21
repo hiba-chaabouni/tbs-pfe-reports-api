@@ -1,0 +1,35 @@
+$kind: http-request
+name: D10 POST report breaking relationship rule -> 409
+description: Yasmine is single major (double_major = 0) and already has 1 report.
+url: "{{base_url}}/reports"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "report_id": "TBS-PFE-2025-FIN-050",
+      "student_id": "11165247",
+      "major": "FIN",
+      "title": "Working Capital Optimization: Case of a Tunisian Pharmaceutical Distributor",
+      "type": "Internship report",
+      "key_feature_1": "Cash conversion cycle",
+      "key_feature_2": "Financial ratios",
+      "key_feature_3": "Excel modeling",
+      "date": "2025-06-10"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 409", function () { expect(pm.response.code).to.eql(409); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(409); });
+      pm.test("Message mentions: Relationship rule", function () { expect(j.message).to.include("Relationship rule"); });
+    language: text/javascript
+order: 10000

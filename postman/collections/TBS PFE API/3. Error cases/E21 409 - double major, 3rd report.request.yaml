@@ -1,0 +1,34 @@
+$kind: http-request
+description: "Aziz: double major, already 2 reports."
+url: "{{base_url}}/reports"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "report_id": "TBS-PFE-2025-MKT-052",
+      "student_id": "09876543",
+      "major": "MKT",
+      "title": "Digital Marketing Strategy for a Tunisian Fintech Startup",
+      "type": "Internship report",
+      "key_feature_1": "Social media marketing",
+      "key_feature_2": "Customer journey",
+      "key_feature_3": "Google Analytics",
+      "date": "2025-06-01"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 409", function () { expect(pm.response.code).to.eql(409); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(409); });
+      pm.test("Message mentions: already has 2 reports", function () { expect(j.message).to.include("already has 2 reports"); });
+    language: text/javascript
+order: 22000

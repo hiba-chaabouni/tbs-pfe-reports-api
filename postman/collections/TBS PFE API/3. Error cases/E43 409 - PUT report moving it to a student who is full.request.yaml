@@ -1,0 +1,34 @@
+$kind: http-request
+description: Youssef is single major and already has a report.
+url: "{{base_url}}/reports/TBS-PFE-2024-BA-017"
+method: PUT
+body:
+  type: json
+  content: |-
+    {
+      "student_id": "08264519",
+      "major": "BA",
+      "title": "Design of a Customer Churn Prediction Model: Case of a Tunisian Telecom Operator",
+      "type": "Internship report",
+      "key_feature_1": "Machine learning",
+      "key_feature_2": "Customer segmentation",
+      "key_feature_3": "Python (scikit-learn)",
+      "date": "2024-06-20"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 409", function () { expect(pm.response.code).to.eql(409); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(409); });
+      pm.test("Message mentions: Relationship rule", function () { expect(j.message).to.include("Relationship rule"); });
+      pm.test("Student id NOT echoed", function () { expect(j.message).to.not.include('08264519'); });
+    language: text/javascript
+order: 46000

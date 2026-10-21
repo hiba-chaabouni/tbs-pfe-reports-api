@@ -1,0 +1,19 @@
+$kind: http-request
+description: Route crashes on purpose (1/0). Client gets clean JSON; traceback only in server console.
+url: "{{base_url}}/debug/error"
+method: GET
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 500", function () { expect(pm.response.code).to.eql(500); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(500); });
+      pm.test("No stack trace leaked", function () { expect(JSON.stringify(j)).to.not.include('Traceback'); });
+      pm.test("No exception name leaked", function () { expect(JSON.stringify(j)).to.not.include('ZeroDivision'); });
+    language: text/javascript
+order: 37000

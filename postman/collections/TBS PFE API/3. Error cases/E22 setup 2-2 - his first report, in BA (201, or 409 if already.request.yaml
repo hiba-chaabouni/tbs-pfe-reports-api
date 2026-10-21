@@ -1,0 +1,30 @@
+$kind: http-request
+name: E22 setup 2/2 - his first report, in BA (201, or 409 if already there)
+description: "Fixture for E22: Skander now has exactly 1 report, in BA."
+url: "{{base_url}}/reports"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "report_id": "TBS-PFE-2024-BA-025",
+      "student_id": "15937486",
+      "major": "BA",
+      "title": "Demand Forecasting with Time Series Models: Case of a Tunisian Beverage Producer",
+      "type": "Internship report",
+      "key_feature_1": "Time series forecasting",
+      "key_feature_2": "ARIMA models",
+      "key_feature_3": "Python (statsmodels)",
+      "date": "2024-06-24"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      pm.test("Status is 201 or 409", function () { expect([201, 409]).to.include(pm.response.code); });
+    language: text/javascript
+order: 24000

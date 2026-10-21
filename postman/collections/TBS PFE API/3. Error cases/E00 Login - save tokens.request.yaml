@@ -1,0 +1,24 @@
+$kind: http-request
+name: E00 Login -> save tokens
+url: "{{base_url}}/auth/login"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "username": "admin",
+      "password": "Admin@TBS2026"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 200", function () { expect(pm.response.code).to.eql(200); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      if (pm.response.code === 200) { pm.environment.set("access_token", j.access_token); pm.environment.set("refresh_token", j.refresh_token); }
+    language: text/javascript
+order: 1000

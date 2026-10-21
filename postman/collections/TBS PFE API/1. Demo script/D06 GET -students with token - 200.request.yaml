@@ -1,0 +1,20 @@
+$kind: http-request
+name: D06 GET /students with token -> 200
+url: "{{base_url}}/students"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 200", function () { expect(pm.response.code).to.eql(200); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Students listed with nested reports", function () { expect(j.students[0]).to.have.property('reports'); });
+      pm.test("student_id visible on protected route", function () { expect(j.students[0]).to.have.property('student_id'); });
+    language: text/javascript
+order: 6000

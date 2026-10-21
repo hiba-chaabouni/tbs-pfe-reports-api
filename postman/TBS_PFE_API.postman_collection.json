@@ -1,0 +1,3183 @@
+{
+  "info": {
+    "name": "TBS PFE API",
+    "description": "Flask REST API for previous TBS PFE reports. Select the environment 'TBS PFE Local'. Tokens are saved automatically after login/refresh.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Demo script",
+      "description": "Run in order on a FRESH server started with a 30-second access token. This is the video script.",
+      "item": [
+        {
+          "name": "D01 Public - GET all reports (privacy proof)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });",
+                  "pm.test(\"Returns 9 seed reports\", function () { expect(j.count).to.eql(9); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "Public route, no token. Test checks that 'student_id' appears NOWHERE in the response.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D02 Public - filter keyword + major",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });",
+                  "pm.test(\"1 result\", function () { expect(j.count).to.eql(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports?keyword=machine learning&major=BA",
+            "description": "Keyword searches title + key features, case-insensitive.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D03 Public - GET one report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports/TBS-PFE-2024-BA-017",
+            "description": "One report through the public_report() serializer: no student_id.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D04 GET /students without token -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 401\", function () { expect(pm.response.code).to.eql(401); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });",
+                  "pm.test(\"Message mentions: Missing token\", function () { expect(j.message).to.include(\"Missing token\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "Student data (with CIN-like ids) is protected.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D05 Login -> save tokens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "if (pm.response.code === 200) { pm.environment.set(\"access_token\", j.access_token); pm.environment.set(\"refresh_token\", j.refresh_token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/auth/login",
+            "description": "Saves access_token and refresh_token into the environment automatically.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@TBS2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D06 GET /students with token -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Students listed with nested reports\", function () { expect(j.students[0]).to.have.property('reports'); });",
+                  "pm.test(\"student_id visible on protected route\", function () { expect(j.students[0]).to.have.property('student_id'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D07 Wait for expiry, retry -> 401 expired",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 401\", function () { expect(pm.response.code).to.eql(401); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });",
+                  "pm.test(\"Message mentions: expired\", function () { expect(j.message).to.include(\"expired\"); });"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const s = parseInt(pm.environment.get(\"wait_seconds\") || \"0\", 10);",
+                  "if (s > 0) {",
+                  "    console.log(\"Waiting \" + s + \" s for the access token to expire...\");",
+                  "    setTimeout(function () {}, s * 1000);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "Postman waits {{wait_seconds}} s before sending (set 0 to wait yourself). Requires the server to run with ACCESS_TOKEN_EXPIRES_SECONDS=30.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D08 Refresh -> new pair (rotation)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "if (pm.response.code === 200) { pm.environment.set(\"old_refresh_token\", pm.environment.get(\"refresh_token\")); }",
+                  "if (pm.response.code === 200) { pm.environment.set(\"access_token\", j.access_token); pm.environment.set(\"refresh_token\", j.refresh_token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/auth/refresh",
+            "description": "Sends the REFRESH token as Bearer. Old refresh token is kept in old_refresh_token for D12, then both tokens are replaced.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{refresh_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D09 Retry GET /students -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D10 POST report breaking relationship rule -> 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 409\", function () { expect(pm.response.code).to.eql(409); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });",
+                  "pm.test(\"Message mentions: Relationship rule\", function () { expect(j.message).to.include(\"Relationship rule\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "Yasmine is single major (double_major = 0) and already has 1 report.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2025-FIN-050\",\n  \"student_id\": \"11165247\",\n  \"major\": \"FIN\",\n  \"title\": \"Working Capital Optimization: Case of a Tunisian Pharmaceutical Distributor\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Cash conversion cycle\",\n  \"key_feature_2\": \"Financial ratios\",\n  \"key_feature_3\": \"Excel modeling\",\n  \"date\": \"2025-06-10\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D11 POST report with invalid data -> 422",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "Every problem is listed at once in the message, separated by |.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-2024-17\",\n  \"student_id\": \"11937402\",\n  \"major\": \"LAW\",\n  \"title\": \"Short\",\n  \"type\": \"Blog post\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-02-30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D12 Reuse OLD refresh token -> 401 revoked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 401\", function () { expect(pm.response.code).to.eql(401); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });",
+                  "pm.test(\"Message mentions: revoked\", function () { expect(j.message).to.include(\"revoked\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/auth/refresh",
+            "description": "Rotation: the refresh token used in D08 was revoked and cannot be reused.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{old_refresh_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D13 Logout -> revoke both tokens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Both tokens revoked\", function () { expect(j.revoked).to.eql(['access_token', 'refresh_token']); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/auth/logout",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D14 Use token after logout -> 401 revoked",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 401\", function () { expect(pm.response.code).to.eql(401); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });",
+                  "pm.test(\"Message mentions: revoked\", function () { expect(j.message).to.include(\"revoked\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. CRUD tour",
+      "description": "POST, GET All, GET By Id, PUT and DELETE for both lists. Video part 2: restart the server with the normal 5-minute token first.",
+      "item": [
+        {
+          "name": "C00 Login -> save tokens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "if (pm.response.code === 200) { pm.environment.set(\"access_token\", j.access_token); pm.environment.set(\"refresh_token\", j.refresh_token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/auth/login",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@TBS2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C01 Students - GET All",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"8 seed students\", function () { expect(j.count).to.eql(8); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C02 Students - GET By Id (nested reports)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Aziz has 2 reports\", function () { expect(j.reports.length).to.eql(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students/09876543",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C03 Students - POST -> 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 201\", function () { expect(pm.response.code).to.eql(201); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Starts with no reports\", function () { expect(j.reports).to.eql([]); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"10203040\",\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": 0,\n  \"level\": \"junior\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C04 Students - PUT -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Level updated\", function () { expect(j.level).to.eql('senior'); });",
+                  "pm.test(\"double_major updated\", function () { expect(j.double_major).to.eql(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{base_url}}/students/10203040",
+            "description": "Full update. student_id comes from the URL and cannot change.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": 1,\n  \"level\": \"senior\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C05 Students - DELETE -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/students/10203040",
+            "description": "Allowed because Rania has no reports.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C06 Students - GET deleted -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 404\", function () { expect(pm.response.code).to.eql(404); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students/10203040",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C07 Reports - GET All (public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });",
+                  "pm.test(\"9 seed reports\", function () { expect(j.count).to.eql(9); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C08 Reports - GET By Id (public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports/TBS-PFE-2024-BA-017",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C09 Reports - POST -> 201 (single major, 1st report)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 201\", function () { expect(pm.response.code).to.eql(201); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "Ranim: single major, no report yet. Response has no student_id.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2025-IT-030\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C10 Reports - PUT -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });",
+                  "pm.test(\"Title updated\", function () { expect(j.title).to.include('AI Chatbot'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{base_url}}/reports/TBS-PFE-2025-IT-030",
+            "description": "Full update. report_id comes from the URL; major and date must still match it.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"AI Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Natural language processing\",\n  \"key_feature_2\": \"Flask REST API\",\n  \"key_feature_3\": \"Usability testing\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C11 Reports - POST -> 201 (double major, other major)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 201\", function () { expect(pm.response.code).to.eql(201); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "Nour: double major with a BA report; MKT is a different major so it is allowed.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2025-MKT-033\",\n  \"student_id\": \"14820367\",\n  \"major\": \"MKT\",\n  \"title\": \"Brand Awareness Campaign Evaluation: Case of a Tunisian Dairy Company\",\n  \"type\": \"Research thesis\",\n  \"key_feature_1\": \"Brand awareness\",\n  \"key_feature_2\": \"Survey analysis\",\n  \"key_feature_3\": \"Consumer behavior\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C12 Students - GET Nour -> now 2 reports",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Nour has 2 reports\", function () { expect(j.reports.length).to.eql(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students/14820367",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C13 Reports - DELETE -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/reports/TBS-PFE-2025-IT-030",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C14 Reports - GET deleted -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 404\", function () { expect(pm.response.code).to.eql(404); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports/TBS-PFE-2025-IT-030",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C15 Reports - filter by type (case-insensitive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });",
+                  "pm.test(\"3 research theses\", function () { expect(j.count).to.eql(3); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports?type=research thesis",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C16 Reports - filter by major + year",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });",
+                  "pm.test(\"1 result\", function () { expect(j.count).to.eql(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports?major=ba&year=2023",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C17 GET / (API running)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "C18 Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/auth/logout",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Error cases",
+      "description": "Every error status. Starts with a login. Run on a fresh server.",
+      "item": [
+        {
+          "name": "E00 Login -> save tokens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 200\", function () { expect(pm.response.code).to.eql(200); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "if (pm.response.code === 200) { pm.environment.set(\"access_token\", j.access_token); pm.environment.set(\"refresh_token\", j.refresh_token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/auth/login",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@TBS2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E01 400 - body is not JSON",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 400\", function () { expect(pm.response.code).to.eql(400); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });",
+                  "pm.test(\"Message mentions: valid JSON\", function () { expect(j.message).to.include(\"valid JSON\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": "{{base_url}}/auth/login",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "hello",
+              "options": {
+                "raw": {
+                  "language": "text"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E02 400 - login missing password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 400\", function () { expect(pm.response.code).to.eql(400); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });",
+                  "pm.test(\"Message mentions: password\", function () { expect(j.message).to.include(\"password\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/auth/login",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E03 400 - student missing fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 400\", function () { expect(pm.response.code).to.eql(400); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });",
+                  "pm.test(\"Message mentions: Missing required field\", function () { expect(j.message).to.include(\"Missing required field\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Eya\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E04 400 - unknown extra field",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 400\", function () { expect(pm.response.code).to.eql(400); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });",
+                  "pm.test(\"Message mentions: Unknown field\", function () { expect(j.message).to.include(\"Unknown field\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"10203041\",\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": 0,\n  \"level\": \"junior\",\n  \"age\": 22\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E05 400 - body is a JSON array, not object",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 400\", function () { expect(pm.response.code).to.eql(400); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });",
+                  "pm.test(\"Message mentions: JSON object\", function () { expect(j.message).to.include(\"JSON object\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  1,\n  2,\n  3\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E06 401 - bad credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 401\", function () { expect(pm.response.code).to.eql(401); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });",
+                  "pm.test(\"Message mentions: Wrong username or password\", function () { expect(j.message).to.include(\"Wrong username or password\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/auth/login",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"wrong-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E07 401 - malformed Authorization header",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 401\", function () { expect(pm.response.code).to.eql(401); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });",
+                  "pm.test(\"Message mentions: Malformed\", function () { expect(j.message).to.include(\"Malformed\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Token abc"
+              }
+            ],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E08 401 - invalid / forged token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 401\", function () { expect(pm.response.code).to.eql(401); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });",
+                  "pm.test(\"Message mentions: signature\", function () { expect(j.message).to.include(\"signature\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "abc.def.ghi",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E09 401 - refresh token used as access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 401\", function () { expect(pm.response.code).to.eql(401); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });",
+                  "pm.test(\"Message mentions: Expected the access token\", function () { expect(j.message).to.include(\"Expected the access token\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{refresh_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E10 401 - access token used as refresh token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 401\", function () { expect(pm.response.code).to.eql(401); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });",
+                  "pm.test(\"Message mentions: Expected the refresh token\", function () { expect(j.message).to.include(\"Expected the refresh token\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/auth/refresh",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E11 401 - POST /reports without token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 401\", function () { expect(pm.response.code).to.eql(401); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });",
+                  "pm.test(\"Message mentions: Missing token\", function () { expect(j.message).to.include(\"Missing token\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2025-IT-030\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E12 404 - unknown report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 404\", function () { expect(pm.response.code).to.eql(404); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports/TBS-PFE-1999-BA-001",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E13 404 - unknown student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 404\", function () { expect(pm.response.code).to.eql(404); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/students/00000000",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E14 404 - unknown route",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 404\", function () { expect(pm.response.code).to.eql(404); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/this-route-does-not-exist",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E15 404 - report for unknown student (id not echoed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 404\", function () { expect(pm.response.code).to.eql(404); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });",
+                  "pm.test(\"Student id NOT echoed\", function () { expect(j.message).to.not.include('99999999'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2025-IT-040\",\n  \"student_id\": \"99999999\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E16 405 - DELETE /reports",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 405\", function () { expect(pm.response.code).to.eql(405); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(405); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E17 405 - PATCH /students/<id>",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 405\", function () { expect(pm.response.code).to.eql(405); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(405); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{base_url}}/students/11165247",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E18 409 - duplicate student_id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 409\", function () { expect(pm.response.code).to.eql(409); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });",
+                  "pm.test(\"Message mentions: already exists\", function () { expect(j.message).to.include(\"already exists\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"11165247\",\n  \"first_name\": \"Yasmine\",\n  \"last_name\": \"Ben Salah\",\n  \"double_major\": 0,\n  \"level\": \"senior\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E19 409 - duplicate report_id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 409\", function () { expect(pm.response.code).to.eql(409); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });",
+                  "pm.test(\"Message mentions: already exists\", function () { expect(j.message).to.include(\"already exists\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2024-BA-017\",\n  \"student_id\": \"11165247\",\n  \"major\": \"BA\",\n  \"title\": \"Design of a Customer Churn Prediction Model: Case of a Tunisian Telecom Operator\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Machine learning\",\n  \"key_feature_2\": \"Customer segmentation\",\n  \"key_feature_3\": \"Python (scikit-learn)\",\n  \"date\": \"2024-06-20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E20 409 - single major, 2nd report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 409\", function () { expect(pm.response.code).to.eql(409); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });",
+                  "pm.test(\"Message mentions: double_major = 0\", function () { expect(j.message).to.include(\"double_major = 0\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "Youssef: single major, already 1 report.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2025-MKT-051\",\n  \"student_id\": \"08264519\",\n  \"major\": \"MKT\",\n  \"title\": \"Go-to-Market Strategy for a Tunisian Fintech Startup\",\n  \"type\": \"Entrepreneurial project\",\n  \"key_feature_1\": \"Market research\",\n  \"key_feature_2\": \"Pricing strategy\",\n  \"key_feature_3\": \"Digital marketing\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E21 409 - double major, 3rd report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 409\", function () { expect(pm.response.code).to.eql(409); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });",
+                  "pm.test(\"Message mentions: already has 2 reports\", function () { expect(j.message).to.include(\"already has 2 reports\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "Aziz: double major, already 2 reports.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2025-MKT-052\",\n  \"student_id\": \"09876543\",\n  \"major\": \"MKT\",\n  \"title\": \"Digital Marketing Strategy for a Tunisian Fintech Startup\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Social media marketing\",\n  \"key_feature_2\": \"Customer journey\",\n  \"key_feature_3\": \"Google Analytics\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E22 setup 1/2 - double-major student (201, or 409 if already there)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "pm.test(\"Status is 201 or 409\", function () { expect([201, 409]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "Fixture for E22, so it never depends on Nour or on earlier folders.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"15937486\",\n  \"first_name\": \"Skander\",\n  \"last_name\": \"Bouazizi\",\n  \"double_major\": 1,\n  \"level\": \"senior\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E22 setup 2/2 - his first report, in BA (201, or 409 if already there)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "pm.test(\"Status is 201 or 409\", function () { expect([201, 409]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "Fixture for E22: Skander now has exactly 1 report, in BA.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2024-BA-025\",\n  \"student_id\": \"15937486\",\n  \"major\": \"BA\",\n  \"title\": \"Demand Forecasting with Time Series Models: Case of a Tunisian Beverage Producer\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Time series forecasting\",\n  \"key_feature_2\": \"ARIMA models\",\n  \"key_feature_3\": \"Python (statsmodels)\",\n  \"date\": \"2024-06-24\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E22 409 - double major, same major twice",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 409\", function () { expect(pm.response.code).to.eql(409); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });",
+                  "pm.test(\"Message mentions: different majors\", function () { expect(j.message).to.include(\"different majors\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "Skander (from the setup requests): double major with exactly 1 report, in BA.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2025-BA-053\",\n  \"student_id\": \"15937486\",\n  \"major\": \"BA\",\n  \"title\": \"Customer Lifetime Value Modeling: Case of a Tunisian E-commerce Platform\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Machine learning\",\n  \"key_feature_2\": \"Customer segmentation\",\n  \"key_feature_3\": \"Python (pandas)\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E23 422 - student: many invalid values",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: double_major\", function () { expect(j.message).to.include(\"double_major\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"1234\",\n  \"first_name\": \"R4n!a\",\n  \"last_name\": \"X\",\n  \"double_major\": 3,\n  \"level\": \"master\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E24 422 - double_major = true",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: integer\", function () { expect(j.message).to.include(\"integer\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"10203041\",\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": true,\n  \"level\": \"junior\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E25 422 - student_id as a number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: must be a string\", function () { expect(j.message).to.include(\"must be a string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/students",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": 10203041,\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": 0,\n  \"level\": \"junior\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E26 422 - bad report_id format",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: TBS-PFE-YYYY-MAJOR-NNN\", function () { expect(j.message).to.include(\"TBS-PFE-YYYY-MAJOR-NNN\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"PFE-17\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E27 422 - major code in id != major",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: does not match 'major'\", function () { expect(j.message).to.include(\"does not match 'major'\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2025-BA-041\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E28 422 - year in id != year of date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: does not match the year\", function () { expect(j.message).to.include(\"does not match the year\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2024-IT-041\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E29 422 - date in the future",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: future\", function () { expect(j.message).to.include(\"future\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2030-IT-041\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2030-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E30 422 - impossible date 2025-02-30",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: real calendar date\", function () { expect(j.message).to.include(\"real calendar date\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2025-IT-041\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-02-30\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E31 422 - unknown major and type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: must be one of\", function () { expect(j.message).to.include(\"must be one of\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/reports",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_id\": \"TBS-PFE-2025-IT-041\",\n  \"student_id\": \"11937402\",\n  \"major\": \"LAW\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Blog post\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E32 422 - invalid public filters",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: Invalid filter\", function () { expect(j.message).to.include(\"Invalid filter\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports?major=LAW&type=blog",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E33 422 - invalid year filter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: 4-digit\", function () { expect(j.message).to.include(\"4-digit\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/reports?year=20x4",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E34 500 - server crash, no stack trace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 500\", function () { expect(pm.response.code).to.eql(500); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(500); });",
+                  "pm.test(\"No stack trace leaked\", function () { expect(JSON.stringify(j)).to.not.include('Traceback'); });",
+                  "pm.test(\"No exception name leaked\", function () { expect(JSON.stringify(j)).to.not.include('ZeroDivision'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/debug/error",
+            "description": "Route crashes on purpose (1/0). Client gets clean JSON; traceback only in server console.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E35 401 - DELETE report without token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 401\", function () { expect(pm.response.code).to.eql(401); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });",
+                  "pm.test(\"Message mentions: Missing token\", function () { expect(j.message).to.include(\"Missing token\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/reports/TBS-PFE-2024-BA-017",
+            "description": "",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E36 404 - PUT unknown student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 404\", function () { expect(pm.response.code).to.eql(404); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{base_url}}/students/00000000",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": 1,\n  \"level\": \"senior\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E37 404 - DELETE unknown report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 404\", function () { expect(pm.response.code).to.eql(404); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/reports/TBS-PFE-1999-BA-001",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E38 400 - PUT student missing fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 400\", function () { expect(pm.response.code).to.eql(400); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });",
+                  "pm.test(\"Message mentions: Missing required field\", function () { expect(j.message).to.include(\"Missing required field\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{base_url}}/students/11165247",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"level\": \"senior\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E39 422 - PUT student invalid level",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: 'level' must be one of\", function () { expect(j.message).to.include(\"'level' must be one of\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{base_url}}/students/11165247",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Yasmine\",\n  \"last_name\": \"Ben Salah\",\n  \"double_major\": 0,\n  \"level\": \"master\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E40 422 - PUT report trying to change report_id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: cannot be changed\", function () { expect(j.message).to.include(\"cannot be changed\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{base_url}}/reports/TBS-PFE-2024-BA-017",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"11165247\",\n  \"major\": \"BA\",\n  \"title\": \"Design of a Customer Churn Prediction Model: Case of a Tunisian Telecom Operator\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Machine learning\",\n  \"key_feature_2\": \"Customer segmentation\",\n  \"key_feature_3\": \"Python (scikit-learn)\",\n  \"date\": \"2024-06-20\",\n  \"report_id\": \"TBS-PFE-2024-BA-018\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E41 422 - PUT report major no longer matches id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 422\", function () { expect(pm.response.code).to.eql(422); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+                  "pm.test(\"Message mentions: does not match 'major'\", function () { expect(j.message).to.include(\"does not match 'major'\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{base_url}}/reports/TBS-PFE-2024-BA-017",
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"11165247\",\n  \"major\": \"FIN\",\n  \"title\": \"Design of a Customer Churn Prediction Model: Case of a Tunisian Telecom Operator\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Machine learning\",\n  \"key_feature_2\": \"Customer segmentation\",\n  \"key_feature_3\": \"Python (scikit-learn)\",\n  \"date\": \"2024-06-20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E42 409 - PUT double major -> single while holding 2 reports",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 409\", function () { expect(pm.response.code).to.eql(409); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });",
+                  "pm.test(\"Message mentions: cannot be set to 0\", function () { expect(j.message).to.include(\"cannot be set to 0\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{base_url}}/students/09876543",
+            "description": "Aziz has 2 reports, so he cannot become single major.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Mohamed Aziz\",\n  \"last_name\": \"Trabelsi\",\n  \"double_major\": 0,\n  \"level\": \"senior\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E43 409 - PUT report moving it to a student who is full",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 409\", function () { expect(pm.response.code).to.eql(409); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });",
+                  "pm.test(\"Message mentions: Relationship rule\", function () { expect(j.message).to.include(\"Relationship rule\"); });",
+                  "pm.test(\"Student id NOT echoed\", function () { expect(j.message).to.not.include('08264519'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{base_url}}/reports/TBS-PFE-2024-BA-017",
+            "description": "Youssef is single major and already has a report.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"08264519\",\n  \"major\": \"BA\",\n  \"title\": \"Design of a Customer Churn Prediction Model: Case of a Tunisian Telecom Operator\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Machine learning\",\n  \"key_feature_2\": \"Customer segmentation\",\n  \"key_feature_3\": \"Python (scikit-learn)\",\n  \"date\": \"2024-06-20\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E44 409 - DELETE student who still has reports",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expect = pm.expect;",
+                  "let j = null;",
+                  "try { j = pm.response.json(); } catch (e) {}",
+                  "pm.test(\"Status is 409\", function () { expect(pm.response.code).to.eql(409); });",
+                  "pm.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+                  "pm.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });",
+                  "pm.test(\"Message mentions: delete the report(s) first\", function () { expect(j.message).to.include(\"delete the report(s) first\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/students/11165247",
+            "description": "A report must always belong to a student.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

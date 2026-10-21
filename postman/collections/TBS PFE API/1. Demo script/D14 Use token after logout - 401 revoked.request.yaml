@@ -1,0 +1,20 @@
+$kind: http-request
+name: D14 Use token after logout -> 401 revoked
+url: "{{base_url}}/students"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 401", function () { expect(pm.response.code).to.eql(401); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(401); });
+      pm.test("Message mentions: revoked", function () { expect(j.message).to.include("revoked"); });
+    language: text/javascript
+order: 14000

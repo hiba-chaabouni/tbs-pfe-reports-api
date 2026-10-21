@@ -1,0 +1,20 @@
+$kind: http-request
+name: E08 401 - invalid / forged token
+url: "{{base_url}}/students"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: abc.def.ghi
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 401", function () { expect(pm.response.code).to.eql(401); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(401); });
+      pm.test("Message mentions: signature", function () { expect(j.message).to.include("signature"); });
+    language: text/javascript
+order: 9000

@@ -1,0 +1,33 @@
+$kind: http-request
+url: "{{base_url}}/reports"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "report_id": "TBS-PFE-2025-IT-040",
+      "student_id": "99999999",
+      "major": "IT",
+      "title": "Chatbot for Student Services: Case of Tunis Business School",
+      "type": "Internship report",
+      "key_feature_1": "NLP",
+      "key_feature_2": "Flask API",
+      "key_feature_3": "User testing",
+      "date": "2025-06-01"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 404", function () { expect(pm.response.code).to.eql(404); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(404); });
+      pm.test("Student id NOT echoed", function () { expect(j.message).to.not.include('99999999'); });
+    language: text/javascript
+order: 16000

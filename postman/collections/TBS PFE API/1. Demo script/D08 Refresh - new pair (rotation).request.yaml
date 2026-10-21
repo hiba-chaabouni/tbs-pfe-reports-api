@@ -1,0 +1,21 @@
+$kind: http-request
+name: D08 Refresh -> new pair (rotation)
+description: Sends the REFRESH token as Bearer. Old refresh token is kept in old_refresh_token for D12, then both tokens are replaced.
+url: "{{base_url}}/auth/refresh"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{refresh_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 200", function () { expect(pm.response.code).to.eql(200); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      if (pm.response.code === 200) { pm.environment.set("old_refresh_token", pm.environment.get("refresh_token")); }
+      if (pm.response.code === 200) { pm.environment.set("access_token", j.access_token); pm.environment.set("refresh_token", j.refresh_token); }
+    language: text/javascript
+order: 8000

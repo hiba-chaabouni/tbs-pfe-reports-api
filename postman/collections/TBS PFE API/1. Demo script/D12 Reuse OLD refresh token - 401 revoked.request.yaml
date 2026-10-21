@@ -1,0 +1,21 @@
+$kind: http-request
+name: D12 Reuse OLD refresh token -> 401 revoked
+description: "Rotation: the refresh token used in D08 was revoked and cannot be reused."
+url: "{{base_url}}/auth/refresh"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{old_refresh_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 401", function () { expect(pm.response.code).to.eql(401); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(401); });
+      pm.test("Message mentions: revoked", function () { expect(j.message).to.include("revoked"); });
+    language: text/javascript
+order: 12000

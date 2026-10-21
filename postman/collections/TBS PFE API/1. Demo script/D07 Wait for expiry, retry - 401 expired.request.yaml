@@ -1,0 +1,29 @@
+$kind: http-request
+name: D07 Wait for expiry, retry -> 401 expired
+description: Postman waits {{wait_seconds}} s before sending (set 0 to wait yourself). Requires the server to run with ACCESS_TOKEN_EXPIRES_SECONDS=30.
+url: "{{base_url}}/students"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 401", function () { expect(pm.response.code).to.eql(401); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(401); });
+      pm.test("Message mentions: expired", function () { expect(j.message).to.include("expired"); });
+    language: text/javascript
+  - type: beforeRequest
+    code: |-
+      const s = parseInt(pm.environment.get("wait_seconds") || "0", 10);
+      if (s > 0) {
+          console.log("Waiting " + s + " s for the access token to expire...");
+          setTimeout(function () {}, s * 1000);
+      }
+    language: text/javascript
+order: 7000

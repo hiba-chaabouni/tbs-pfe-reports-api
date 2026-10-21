@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{base_url}}/students"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "student_id": "10203041",
+      "first_name": "Rania",
+      "last_name": "Ben Ammar",
+      "double_major": 0,
+      "level": "junior",
+      "age": 22
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 400", function () { expect(pm.response.code).to.eql(400); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(400); });
+      pm.test("Message mentions: Unknown field", function () { expect(j.message).to.include("Unknown field"); });
+    language: text/javascript
+order: 5000

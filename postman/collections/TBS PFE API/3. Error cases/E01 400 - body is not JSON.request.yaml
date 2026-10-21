@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{base_url}}/auth/login"
+method: POST
+headers:
+  Content-Type: text/plain
+body:
+  type: text
+  content: hello
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 400", function () { expect(pm.response.code).to.eql(400); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(400); });
+      pm.test("Message mentions: valid JSON", function () { expect(j.message).to.include("valid JSON"); });
+    language: text/javascript
+order: 2000

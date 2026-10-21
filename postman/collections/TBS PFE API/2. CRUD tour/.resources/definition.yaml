@@ -1,0 +1,3 @@
+$kind: collection
+description: "POST, GET All, GET By Id, PUT and DELETE for both lists. Video part 2: restart the server with the normal 5-minute token first."
+order: 2000

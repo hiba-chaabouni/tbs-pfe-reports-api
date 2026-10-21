@@ -1,0 +1,19 @@
+$kind: http-request
+name: C06 Students - GET deleted -> 404
+url: "{{base_url}}/students/10203040"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 404", function () { expect(pm.response.code).to.eql(404); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(404); });
+    language: text/javascript
+order: 7000

@@ -1,0 +1,3 @@
+$kind: collection
+description: Every error status. Starts with a login. Run on a fresh server.
+order: 3000

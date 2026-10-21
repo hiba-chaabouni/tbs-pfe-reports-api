@@ -1,0 +1,19 @@
+$kind: http-request
+name: C13 Reports - DELETE -> 200
+url: "{{base_url}}/reports/TBS-PFE-2025-IT-030"
+method: DELETE
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 200", function () { expect(pm.response.code).to.eql(200); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("PRIVACY: no student_id in public response", function () { expect(JSON.stringify(j)).to.not.include("student_id"); });
+    language: text/javascript
+order: 14000

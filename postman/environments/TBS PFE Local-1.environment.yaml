@@ -1,0 +1,12 @@
+name: TBS PFE Local
+values:
+  - key: base_url
+    value: 'http://127.0.0.1:5000'
+  - key: access_token
+    value: ''
+  - key: refresh_token
+    value: ''
+  - key: old_refresh_token
+    value: ''
+  - key: wait_seconds
+    value: '35'

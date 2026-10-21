@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/students"
+method: GET
+headers:
+  Authorization: Token abc
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 401", function () { expect(pm.response.code).to.eql(401); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(401); });
+      pm.test("Message mentions: Malformed", function () { expect(j.message).to.include("Malformed"); });
+    language: text/javascript
+order: 8000

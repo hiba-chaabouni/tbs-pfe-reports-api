@@ -1,0 +1,1935 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-17T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v10.0.0",
+  "resources": [
+    {
+      "_id": "wrk_tbs_pfe",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "TBS PFE API",
+      "description": "Select the environment 'TBS PFE Local'. Tokens are saved by after-response scripts.",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_tbs_base",
+      "_type": "environment",
+      "parentId": "wrk_tbs_pfe",
+      "name": "Base Environment",
+      "data": {},
+      "metaSortKey": 0
+    },
+    {
+      "_id": "env_tbs_local",
+      "_type": "environment",
+      "parentId": "env_tbs_base",
+      "name": "TBS PFE Local",
+      "metaSortKey": 1,
+      "data": {
+        "base_url": "http://127.0.0.1:5000",
+        "access_token": "",
+        "refresh_token": "",
+        "old_refresh_token": ""
+      }
+    },
+    {
+      "_id": "fld_tbs_1",
+      "_type": "request_group",
+      "parentId": "wrk_tbs_pfe",
+      "name": "1. Demo script",
+      "description": "Run in order on a FRESH server started with a 30-second access token. This is the video script.",
+      "metaSortKey": 0
+    },
+    {
+      "_id": "req_tbs_1_00",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D01 Public - GET all reports (privacy proof)",
+      "description": "Public route, no token. Test checks that 'student_id' appears NOWHERE in the response.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 0,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });\ninsomnia.test(\"Returns 9 seed reports\", function () { expect(j.count).to.eql(9); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_01",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D02 Public - filter keyword + major",
+      "description": "Keyword searches title + key features, case-insensitive.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports?keyword=machine learning&major=BA",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 1,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });\ninsomnia.test(\"1 result\", function () { expect(j.count).to.eql(1); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_02",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D03 Public - GET one report",
+      "description": "One report through the public_report() serializer: no student_id.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports/TBS-PFE-2024-BA-017",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 2,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_03",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D04 GET /students without token -> 401",
+      "description": "Student data (with CIN-like ids) is protected.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 3,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 401\", function () { expect(insomnia.response.code).to.eql(401); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });\ninsomnia.test(\"Message mentions: Missing token\", function () { expect(j.message).to.include(\"Missing token\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_04",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D05 Login -> save tokens",
+      "description": "Saves access_token and refresh_token into the environment automatically.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@TBS2026\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 4,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\nif (insomnia.response.code === 200) { insomnia.environment.set(\"access_token\", j.access_token); insomnia.environment.set(\"refresh_token\", j.refresh_token); }",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_05",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D06 GET /students with token -> 200",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 5,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Students listed with nested reports\", function () { expect(j.students[0]).to.have.property('reports'); });\ninsomnia.test(\"student_id visible on protected route\", function () { expect(j.students[0]).to.have.property('student_id'); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_06",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D07 Wait for expiry, retry -> 401 expired",
+      "description": "WAIT ~30 seconds after D05/D06 before sending this one. Requires the server to run with ACCESS_TOKEN_EXPIRES_SECONDS=30.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 6,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 401\", function () { expect(insomnia.response.code).to.eql(401); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });\ninsomnia.test(\"Message mentions: expired\", function () { expect(j.message).to.include(\"expired\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_07",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D08 Refresh -> new pair (rotation)",
+      "description": "Sends the REFRESH token as Bearer. Old refresh token is kept in old_refresh_token for D12, then both tokens are replaced.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/refresh",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.refresh_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 7,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\nif (insomnia.response.code === 200) { insomnia.environment.set(\"old_refresh_token\", insomnia.environment.get(\"refresh_token\")); }\nif (insomnia.response.code === 200) { insomnia.environment.set(\"access_token\", j.access_token); insomnia.environment.set(\"refresh_token\", j.refresh_token); }",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_08",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D09 Retry GET /students -> 200",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 8,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_09",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D10 POST report breaking relationship rule -> 409",
+      "description": "Yasmine is single major (double_major = 0) and already has 1 report.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2025-FIN-050\",\n  \"student_id\": \"11165247\",\n  \"major\": \"FIN\",\n  \"title\": \"Working Capital Optimization: Case of a Tunisian Pharmaceutical Distributor\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Cash conversion cycle\",\n  \"key_feature_2\": \"Financial ratios\",\n  \"key_feature_3\": \"Excel modeling\",\n  \"date\": \"2025-06-10\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 9,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 409\", function () { expect(insomnia.response.code).to.eql(409); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });\ninsomnia.test(\"Message mentions: Relationship rule\", function () { expect(j.message).to.include(\"Relationship rule\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_10",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D11 POST report with invalid data -> 422",
+      "description": "Every problem is listed at once in the message, separated by |.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-2024-17\",\n  \"student_id\": \"11937402\",\n  \"major\": \"LAW\",\n  \"title\": \"Short\",\n  \"type\": \"Blog post\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-02-30\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 10,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_11",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D12 Reuse OLD refresh token -> 401 revoked",
+      "description": "Rotation: the refresh token used in D08 was revoked and cannot be reused.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/refresh",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.old_refresh_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 11,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 401\", function () { expect(insomnia.response.code).to.eql(401); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });\ninsomnia.test(\"Message mentions: revoked\", function () { expect(j.message).to.include(\"revoked\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_12",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D13 Logout -> revoke both tokens",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/logout",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"refresh_token\": \"{{ _.refresh_token }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 12,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Both tokens revoked\", function () { expect(j.revoked).to.eql(['access_token', 'refresh_token']); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_1_13",
+      "_type": "request",
+      "parentId": "fld_tbs_1",
+      "name": "D14 Use token after logout -> 401 revoked",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 13,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 401\", function () { expect(insomnia.response.code).to.eql(401); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });\ninsomnia.test(\"Message mentions: revoked\", function () { expect(j.message).to.include(\"revoked\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "fld_tbs_2",
+      "_type": "request_group",
+      "parentId": "wrk_tbs_pfe",
+      "name": "2. CRUD tour",
+      "description": "POST, GET All, GET By Id, PUT and DELETE for both lists. Video part 2: restart the server with the normal 5-minute token first.",
+      "metaSortKey": 1000
+    },
+    {
+      "_id": "req_tbs_2_00",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C00 Login -> save tokens",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@TBS2026\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 0,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\nif (insomnia.response.code === 200) { insomnia.environment.set(\"access_token\", j.access_token); insomnia.environment.set(\"refresh_token\", j.refresh_token); }",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_01",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C01 Students - GET All",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 1,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"8 seed students\", function () { expect(j.count).to.eql(8); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_02",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C02 Students - GET By Id (nested reports)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students/09876543",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 2,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Aziz has 2 reports\", function () { expect(j.reports.length).to.eql(2); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_03",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C03 Students - POST -> 201",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/students",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"student_id\": \"10203040\",\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": 0,\n  \"level\": \"junior\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 3,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 201\", function () { expect(insomnia.response.code).to.eql(201); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Starts with no reports\", function () { expect(j.reports).to.eql([]); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_04",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C04 Students - PUT -> 200",
+      "description": "Full update. student_id comes from the URL and cannot change.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/students/10203040",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": 1,\n  \"level\": \"senior\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 4,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Level updated\", function () { expect(j.level).to.eql('senior'); });\ninsomnia.test(\"double_major updated\", function () { expect(j.double_major).to.eql(1); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_05",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C05 Students - DELETE -> 200",
+      "description": "Allowed because Rania has no reports.",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/students/10203040",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 5,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_06",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C06 Students - GET deleted -> 404",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students/10203040",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 6,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 404\", function () { expect(insomnia.response.code).to.eql(404); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_07",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C07 Reports - GET All (public)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 7,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });\ninsomnia.test(\"9 seed reports\", function () { expect(j.count).to.eql(9); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_08",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C08 Reports - GET By Id (public)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports/TBS-PFE-2024-BA-017",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 8,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_09",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C09 Reports - POST -> 201 (single major, 1st report)",
+      "description": "Ranim: single major, no report yet. Response has no student_id.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2025-IT-030\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 9,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 201\", function () { expect(insomnia.response.code).to.eql(201); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_10",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C10 Reports - PUT -> 200",
+      "description": "Full update. report_id comes from the URL; major and date must still match it.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/reports/TBS-PFE-2025-IT-030",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"AI Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Natural language processing\",\n  \"key_feature_2\": \"Flask REST API\",\n  \"key_feature_3\": \"Usability testing\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 10,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });\ninsomnia.test(\"Title updated\", function () { expect(j.title).to.include('AI Chatbot'); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_11",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C11 Reports - POST -> 201 (double major, other major)",
+      "description": "Nour: double major with a BA report; MKT is a different major so it is allowed.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2025-MKT-033\",\n  \"student_id\": \"14820367\",\n  \"major\": \"MKT\",\n  \"title\": \"Brand Awareness Campaign Evaluation: Case of a Tunisian Dairy Company\",\n  \"type\": \"Research thesis\",\n  \"key_feature_1\": \"Brand awareness\",\n  \"key_feature_2\": \"Survey analysis\",\n  \"key_feature_3\": \"Consumer behavior\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 11,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 201\", function () { expect(insomnia.response.code).to.eql(201); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_12",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C12 Students - GET Nour -> now 2 reports",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students/14820367",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 12,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Nour has 2 reports\", function () { expect(j.reports.length).to.eql(2); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_13",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C13 Reports - DELETE -> 200",
+      "description": "",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/reports/TBS-PFE-2025-IT-030",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 13,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_14",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C14 Reports - GET deleted -> 404",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports/TBS-PFE-2025-IT-030",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 14,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 404\", function () { expect(insomnia.response.code).to.eql(404); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_15",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C15 Reports - filter by type (case-insensitive)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports?type=research thesis",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 15,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });\ninsomnia.test(\"3 research theses\", function () { expect(j.count).to.eql(3); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_16",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C16 Reports - filter by major + year",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports?major=ba&year=2023",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 16,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"PRIVACY: no student_id in public response\", function () { expect(JSON.stringify(j)).to.not.include(\"student_id\"); });\ninsomnia.test(\"1 result\", function () { expect(j.count).to.eql(1); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_17",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C17 GET / (API running)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 17,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_2_18",
+      "_type": "request",
+      "parentId": "fld_tbs_2",
+      "name": "C18 Logout",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/logout",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"refresh_token\": \"{{ _.refresh_token }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 18,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "fld_tbs_3",
+      "_type": "request_group",
+      "parentId": "wrk_tbs_pfe",
+      "name": "3. Error cases",
+      "description": "Every error status. Starts with a login. Run on a fresh server.",
+      "metaSortKey": 2000
+    },
+    {
+      "_id": "req_tbs_3_00",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E00 Login -> save tokens",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@TBS2026\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 0,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 200\", function () { expect(insomnia.response.code).to.eql(200); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\nif (insomnia.response.code === 200) { insomnia.environment.set(\"access_token\", j.access_token); insomnia.environment.set(\"refresh_token\", j.refresh_token); }",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_01",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E01 400 - body is not JSON",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "text/plain",
+        "text": "hello"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "text/plain"
+        }
+      ],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 1,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 400\", function () { expect(insomnia.response.code).to.eql(400); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });\ninsomnia.test(\"Message mentions: valid JSON\", function () { expect(j.message).to.include(\"valid JSON\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_02",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E02 400 - login missing password",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"admin\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 2,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 400\", function () { expect(insomnia.response.code).to.eql(400); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });\ninsomnia.test(\"Message mentions: password\", function () { expect(j.message).to.include(\"password\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_03",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E03 400 - student missing fields",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/students",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"first_name\": \"Eya\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 3,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 400\", function () { expect(insomnia.response.code).to.eql(400); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });\ninsomnia.test(\"Message mentions: Missing required field\", function () { expect(j.message).to.include(\"Missing required field\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_04",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E04 400 - unknown extra field",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/students",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"student_id\": \"10203041\",\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": 0,\n  \"level\": \"junior\",\n  \"age\": 22\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 4,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 400\", function () { expect(insomnia.response.code).to.eql(400); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });\ninsomnia.test(\"Message mentions: Unknown field\", function () { expect(j.message).to.include(\"Unknown field\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_05",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E05 400 - body is a JSON array, not object",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "[\n  1,\n  2,\n  3\n]"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 5,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 400\", function () { expect(insomnia.response.code).to.eql(400); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });\ninsomnia.test(\"Message mentions: JSON object\", function () { expect(j.message).to.include(\"JSON object\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_06",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E06 401 - bad credentials",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"username\": \"admin\",\n  \"password\": \"wrong-password\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 6,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 401\", function () { expect(insomnia.response.code).to.eql(401); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });\ninsomnia.test(\"Message mentions: Wrong username or password\", function () { expect(j.message).to.include(\"Wrong username or password\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_07",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E07 401 - malformed Authorization header",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students",
+      "body": {},
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Token abc"
+        }
+      ],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 7,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 401\", function () { expect(insomnia.response.code).to.eql(401); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });\ninsomnia.test(\"Message mentions: Malformed\", function () { expect(j.message).to.include(\"Malformed\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_08",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E08 401 - invalid / forged token",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "abc.def.ghi"
+      },
+      "parameters": [],
+      "metaSortKey": 8,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 401\", function () { expect(insomnia.response.code).to.eql(401); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });\ninsomnia.test(\"Message mentions: signature\", function () { expect(j.message).to.include(\"signature\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_09",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E09 401 - refresh token used as access token",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.refresh_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 9,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 401\", function () { expect(insomnia.response.code).to.eql(401); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });\ninsomnia.test(\"Message mentions: Expected the access token\", function () { expect(j.message).to.include(\"Expected the access token\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_10",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E10 401 - access token used as refresh token",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/refresh",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 10,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 401\", function () { expect(insomnia.response.code).to.eql(401); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });\ninsomnia.test(\"Message mentions: Expected the refresh token\", function () { expect(j.message).to.include(\"Expected the refresh token\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_11",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E11 401 - POST /reports without token",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2025-IT-030\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 11,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 401\", function () { expect(insomnia.response.code).to.eql(401); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });\ninsomnia.test(\"Message mentions: Missing token\", function () { expect(j.message).to.include(\"Missing token\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_12",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E12 404 - unknown report",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports/TBS-PFE-1999-BA-001",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 12,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 404\", function () { expect(insomnia.response.code).to.eql(404); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_13",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E13 404 - unknown student",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/students/00000000",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 13,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 404\", function () { expect(insomnia.response.code).to.eql(404); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_14",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E14 404 - unknown route",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/this-route-does-not-exist",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 14,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 404\", function () { expect(insomnia.response.code).to.eql(404); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_15",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E15 404 - report for unknown student (id not echoed)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2025-IT-040\",\n  \"student_id\": \"99999999\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 15,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 404\", function () { expect(insomnia.response.code).to.eql(404); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });\ninsomnia.test(\"Student id NOT echoed\", function () { expect(j.message).to.not.include('99999999'); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_16",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E16 405 - DELETE /reports",
+      "description": "",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/reports",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 16,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 405\", function () { expect(insomnia.response.code).to.eql(405); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(405); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_17",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E17 405 - PATCH /students/<id>",
+      "description": "",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/students/11165247",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 17,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 405\", function () { expect(insomnia.response.code).to.eql(405); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(405); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_18",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E18 409 - duplicate student_id",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/students",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"student_id\": \"11165247\",\n  \"first_name\": \"Yasmine\",\n  \"last_name\": \"Ben Salah\",\n  \"double_major\": 0,\n  \"level\": \"senior\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 18,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 409\", function () { expect(insomnia.response.code).to.eql(409); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });\ninsomnia.test(\"Message mentions: already exists\", function () { expect(j.message).to.include(\"already exists\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_19",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E19 409 - duplicate report_id",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2024-BA-017\",\n  \"student_id\": \"11165247\",\n  \"major\": \"BA\",\n  \"title\": \"Design of a Customer Churn Prediction Model: Case of a Tunisian Telecom Operator\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Machine learning\",\n  \"key_feature_2\": \"Customer segmentation\",\n  \"key_feature_3\": \"Python (scikit-learn)\",\n  \"date\": \"2024-06-20\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 19,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 409\", function () { expect(insomnia.response.code).to.eql(409); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });\ninsomnia.test(\"Message mentions: already exists\", function () { expect(j.message).to.include(\"already exists\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_20",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E20 409 - single major, 2nd report",
+      "description": "Youssef: single major, already 1 report.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2025-MKT-051\",\n  \"student_id\": \"08264519\",\n  \"major\": \"MKT\",\n  \"title\": \"Go-to-Market Strategy for a Tunisian Fintech Startup\",\n  \"type\": \"Entrepreneurial project\",\n  \"key_feature_1\": \"Market research\",\n  \"key_feature_2\": \"Pricing strategy\",\n  \"key_feature_3\": \"Digital marketing\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 20,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 409\", function () { expect(insomnia.response.code).to.eql(409); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });\ninsomnia.test(\"Message mentions: double_major = 0\", function () { expect(j.message).to.include(\"double_major = 0\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_21",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E21 409 - double major, 3rd report",
+      "description": "Aziz: double major, already 2 reports.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2025-MKT-052\",\n  \"student_id\": \"09876543\",\n  \"major\": \"MKT\",\n  \"title\": \"Digital Marketing Strategy for a Tunisian Fintech Startup\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Social media marketing\",\n  \"key_feature_2\": \"Customer journey\",\n  \"key_feature_3\": \"Google Analytics\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 21,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 409\", function () { expect(insomnia.response.code).to.eql(409); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });\ninsomnia.test(\"Message mentions: already has 2 reports\", function () { expect(j.message).to.include(\"already has 2 reports\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_22",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E22 setup 1/2 - double-major student (201, or 409 if already there)",
+      "description": "Fixture for E22, so it never depends on Nour or on earlier folders.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/students",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"student_id\": \"15937486\",\n  \"first_name\": \"Skander\",\n  \"last_name\": \"Bouazizi\",\n  \"double_major\": 1,\n  \"level\": \"senior\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 22,
+      "afterResponseScript": "const expect = insomnia.expect;\ninsomnia.test(\"Status is 201 or 409\", function () { expect([201, 409]).to.include(insomnia.response.code); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_23",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E22 setup 2/2 - his first report, in BA (201, or 409 if already there)",
+      "description": "Fixture for E22: Skander now has exactly 1 report, in BA.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2024-BA-025\",\n  \"student_id\": \"15937486\",\n  \"major\": \"BA\",\n  \"title\": \"Demand Forecasting with Time Series Models: Case of a Tunisian Beverage Producer\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Time series forecasting\",\n  \"key_feature_2\": \"ARIMA models\",\n  \"key_feature_3\": \"Python (statsmodels)\",\n  \"date\": \"2024-06-24\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 23,
+      "afterResponseScript": "const expect = insomnia.expect;\ninsomnia.test(\"Status is 201 or 409\", function () { expect([201, 409]).to.include(insomnia.response.code); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_24",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E22 409 - double major, same major twice",
+      "description": "Skander (from the setup requests): double major with exactly 1 report, in BA.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2025-BA-053\",\n  \"student_id\": \"15937486\",\n  \"major\": \"BA\",\n  \"title\": \"Customer Lifetime Value Modeling: Case of a Tunisian E-commerce Platform\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Machine learning\",\n  \"key_feature_2\": \"Customer segmentation\",\n  \"key_feature_3\": \"Python (pandas)\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 24,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 409\", function () { expect(insomnia.response.code).to.eql(409); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });\ninsomnia.test(\"Message mentions: different majors\", function () { expect(j.message).to.include(\"different majors\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_25",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E23 422 - student: many invalid values",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/students",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"student_id\": \"1234\",\n  \"first_name\": \"R4n!a\",\n  \"last_name\": \"X\",\n  \"double_major\": 3,\n  \"level\": \"master\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 25,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: double_major\", function () { expect(j.message).to.include(\"double_major\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_26",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E24 422 - double_major = true",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/students",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"student_id\": \"10203041\",\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": true,\n  \"level\": \"junior\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 26,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: integer\", function () { expect(j.message).to.include(\"integer\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_27",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E25 422 - student_id as a number",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/students",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"student_id\": 10203041,\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": 0,\n  \"level\": \"junior\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 27,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: must be a string\", function () { expect(j.message).to.include(\"must be a string\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_28",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E26 422 - bad report_id format",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"PFE-17\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 28,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: TBS-PFE-YYYY-MAJOR-NNN\", function () { expect(j.message).to.include(\"TBS-PFE-YYYY-MAJOR-NNN\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_29",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E27 422 - major code in id != major",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2025-BA-041\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 29,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: does not match 'major'\", function () { expect(j.message).to.include(\"does not match 'major'\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_30",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E28 422 - year in id != year of date",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2024-IT-041\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 30,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: does not match the year\", function () { expect(j.message).to.include(\"does not match the year\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_31",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E29 422 - date in the future",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2030-IT-041\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2030-01-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 31,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: future\", function () { expect(j.message).to.include(\"future\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_32",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E30 422 - impossible date 2025-02-30",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2025-IT-041\",\n  \"student_id\": \"11937402\",\n  \"major\": \"IT\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-02-30\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 32,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: real calendar date\", function () { expect(j.message).to.include(\"real calendar date\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_33",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E31 422 - unknown major and type",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.base_url }}/reports",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"report_id\": \"TBS-PFE-2025-IT-041\",\n  \"student_id\": \"11937402\",\n  \"major\": \"LAW\",\n  \"title\": \"Chatbot for Student Services: Case of Tunis Business School\",\n  \"type\": \"Blog post\",\n  \"key_feature_1\": \"NLP\",\n  \"key_feature_2\": \"Flask API\",\n  \"key_feature_3\": \"User testing\",\n  \"date\": \"2025-06-01\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 33,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: must be one of\", function () { expect(j.message).to.include(\"must be one of\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_34",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E32 422 - invalid public filters",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports?major=LAW&type=blog",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 34,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: Invalid filter\", function () { expect(j.message).to.include(\"Invalid filter\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_35",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E33 422 - invalid year filter",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.base_url }}/reports?year=20x4",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 35,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: 4-digit\", function () { expect(j.message).to.include(\"4-digit\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_36",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E34 500 - server crash, no stack trace",
+      "description": "Route crashes on purpose (1/0). Client gets clean JSON; traceback only in server console.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/debug/error",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 36,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 500\", function () { expect(insomnia.response.code).to.eql(500); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(500); });\ninsomnia.test(\"No stack trace leaked\", function () { expect(JSON.stringify(j)).to.not.include('Traceback'); });\ninsomnia.test(\"No exception name leaked\", function () { expect(JSON.stringify(j)).to.not.include('ZeroDivision'); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_37",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E35 401 - DELETE report without token",
+      "description": "",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/reports/TBS-PFE-2024-BA-017",
+      "body": {},
+      "headers": [],
+      "authentication": {},
+      "parameters": [],
+      "metaSortKey": 37,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 401\", function () { expect(insomnia.response.code).to.eql(401); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(401); });\ninsomnia.test(\"Message mentions: Missing token\", function () { expect(j.message).to.include(\"Missing token\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_38",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E36 404 - PUT unknown student",
+      "description": "",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/students/00000000",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"first_name\": \"Rania\",\n  \"last_name\": \"Ben Ammar\",\n  \"double_major\": 1,\n  \"level\": \"senior\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 38,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 404\", function () { expect(insomnia.response.code).to.eql(404); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_39",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E37 404 - DELETE unknown report",
+      "description": "",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/reports/TBS-PFE-1999-BA-001",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 39,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 404\", function () { expect(insomnia.response.code).to.eql(404); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(404); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_40",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E38 400 - PUT student missing fields",
+      "description": "",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/students/11165247",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"level\": \"senior\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 40,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 400\", function () { expect(insomnia.response.code).to.eql(400); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(400); });\ninsomnia.test(\"Message mentions: Missing required field\", function () { expect(j.message).to.include(\"Missing required field\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_41",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E39 422 - PUT student invalid level",
+      "description": "",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/students/11165247",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"first_name\": \"Yasmine\",\n  \"last_name\": \"Ben Salah\",\n  \"double_major\": 0,\n  \"level\": \"master\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 41,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: 'level' must be one of\", function () { expect(j.message).to.include(\"'level' must be one of\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_42",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E40 422 - PUT report trying to change report_id",
+      "description": "",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/reports/TBS-PFE-2024-BA-017",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"student_id\": \"11165247\",\n  \"major\": \"BA\",\n  \"title\": \"Design of a Customer Churn Prediction Model: Case of a Tunisian Telecom Operator\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Machine learning\",\n  \"key_feature_2\": \"Customer segmentation\",\n  \"key_feature_3\": \"Python (scikit-learn)\",\n  \"date\": \"2024-06-20\",\n  \"report_id\": \"TBS-PFE-2024-BA-018\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 42,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: cannot be changed\", function () { expect(j.message).to.include(\"cannot be changed\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_43",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E41 422 - PUT report major no longer matches id",
+      "description": "",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/reports/TBS-PFE-2024-BA-017",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"student_id\": \"11165247\",\n  \"major\": \"FIN\",\n  \"title\": \"Design of a Customer Churn Prediction Model: Case of a Tunisian Telecom Operator\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Machine learning\",\n  \"key_feature_2\": \"Customer segmentation\",\n  \"key_feature_3\": \"Python (scikit-learn)\",\n  \"date\": \"2024-06-20\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 43,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 422\", function () { expect(insomnia.response.code).to.eql(422); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(422); });\ninsomnia.test(\"Message mentions: does not match 'major'\", function () { expect(j.message).to.include(\"does not match 'major'\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_44",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E42 409 - PUT double major -> single while holding 2 reports",
+      "description": "Aziz has 2 reports, so he cannot become single major.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/students/09876543",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"first_name\": \"Mohamed Aziz\",\n  \"last_name\": \"Trabelsi\",\n  \"double_major\": 0,\n  \"level\": \"senior\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 44,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 409\", function () { expect(insomnia.response.code).to.eql(409); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });\ninsomnia.test(\"Message mentions: cannot be set to 0\", function () { expect(j.message).to.include(\"cannot be set to 0\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_45",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E43 409 - PUT report moving it to a student who is full",
+      "description": "Youssef is single major and already has a report.",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/reports/TBS-PFE-2024-BA-017",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"student_id\": \"08264519\",\n  \"major\": \"BA\",\n  \"title\": \"Design of a Customer Churn Prediction Model: Case of a Tunisian Telecom Operator\",\n  \"type\": \"Internship report\",\n  \"key_feature_1\": \"Machine learning\",\n  \"key_feature_2\": \"Customer segmentation\",\n  \"key_feature_3\": \"Python (scikit-learn)\",\n  \"date\": \"2024-06-20\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 45,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 409\", function () { expect(insomnia.response.code).to.eql(409); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });\ninsomnia.test(\"Message mentions: Relationship rule\", function () { expect(j.message).to.include(\"Relationship rule\"); });\ninsomnia.test(\"Student id NOT echoed\", function () { expect(j.message).to.not.include('08264519'); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    },
+    {
+      "_id": "req_tbs_3_46",
+      "_type": "request",
+      "parentId": "fld_tbs_3",
+      "name": "E44 409 - DELETE student who still has reports",
+      "description": "A report must always belong to a student.",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/students/11165247",
+      "body": {},
+      "headers": [],
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.access_token }}"
+      },
+      "parameters": [],
+      "metaSortKey": 46,
+      "afterResponseScript": "const expect = insomnia.expect;\nlet j = null;\ntry { j = insomnia.response.json(); } catch (e) {}\ninsomnia.test(\"Status is 409\", function () { expect(insomnia.response.code).to.eql(409); });\ninsomnia.test(\"Response is JSON\", function () { expect(j).to.be.an(\"object\"); });\ninsomnia.test(\"Error format {error, message, status}\", function () { expect(j).to.have.all.keys(\"error\", \"message\", \"status\"); expect(j.status).to.eql(409); });\ninsomnia.test(\"Message mentions: delete the report(s) first\", function () { expect(j.message).to.include(\"delete the report(s) first\"); });",
+      "preRequestScript": "",
+      "settingEncodeUrl": true
+    }
+  ]
+}

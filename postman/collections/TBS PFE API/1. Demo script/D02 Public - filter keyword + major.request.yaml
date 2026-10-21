@@ -1,0 +1,21 @@
+$kind: http-request
+description: Keyword searches title + key features, case-insensitive.
+url: "{{base_url}}/reports?keyword=machine learning&major=BA"
+method: GET
+queryParams:
+  keyword: machine learning
+  major: BA
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 200", function () { expect(pm.response.code).to.eql(200); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("PRIVACY: no student_id in public response", function () { expect(JSON.stringify(j)).to.not.include("student_id"); });
+      pm.test("1 result", function () { expect(j.count).to.eql(1); });
+    language: text/javascript
+order: 2000

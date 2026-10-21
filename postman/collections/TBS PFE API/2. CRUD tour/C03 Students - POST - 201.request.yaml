@@ -1,0 +1,29 @@
+$kind: http-request
+name: C03 Students - POST -> 201
+url: "{{base_url}}/students"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "student_id": "10203040",
+      "first_name": "Rania",
+      "last_name": "Ben Ammar",
+      "double_major": 0,
+      "level": "junior"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 201", function () { expect(pm.response.code).to.eql(201); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Starts with no reports", function () { expect(j.reports).to.eql([]); });
+    language: text/javascript
+order: 4000

@@ -1,0 +1,19 @@
+$kind: http-request
+name: D04 GET /students without token -> 401
+description: Student data (with CIN-like ids) is protected.
+url: "{{base_url}}/students"
+method: GET
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 401", function () { expect(pm.response.code).to.eql(401); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(401); });
+      pm.test("Message mentions: Missing token", function () { expect(j.message).to.include("Missing token"); });
+    language: text/javascript
+order: 4000

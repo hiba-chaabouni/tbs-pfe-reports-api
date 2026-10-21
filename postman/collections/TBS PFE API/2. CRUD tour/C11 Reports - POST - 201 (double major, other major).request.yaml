@@ -1,0 +1,34 @@
+$kind: http-request
+name: C11 Reports - POST -> 201 (double major, other major)
+description: "Nour: double major with a BA report; MKT is a different major so it is allowed."
+url: "{{base_url}}/reports"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "report_id": "TBS-PFE-2025-MKT-033",
+      "student_id": "14820367",
+      "major": "MKT",
+      "title": "Brand Awareness Campaign Evaluation: Case of a Tunisian Dairy Company",
+      "type": "Research thesis",
+      "key_feature_1": "Brand awareness",
+      "key_feature_2": "Survey analysis",
+      "key_feature_3": "Consumer behavior",
+      "date": "2025-06-01"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 201", function () { expect(pm.response.code).to.eql(201); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("PRIVACY: no student_id in public response", function () { expect(JSON.stringify(j)).to.not.include("student_id"); });
+    language: text/javascript
+order: 12000

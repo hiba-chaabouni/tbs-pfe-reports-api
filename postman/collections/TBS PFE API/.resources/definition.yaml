@@ -1,0 +1,2 @@
+$kind: collection
+description: Flask REST API for previous TBS PFE reports. Select the environment 'TBS PFE Local'. Tokens are saved automatically after login/refresh.

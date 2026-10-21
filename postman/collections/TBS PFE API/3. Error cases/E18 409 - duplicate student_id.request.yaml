@@ -1,0 +1,29 @@
+$kind: http-request
+url: "{{base_url}}/students"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "student_id": "11165247",
+      "first_name": "Yasmine",
+      "last_name": "Ben Salah",
+      "double_major": 0,
+      "level": "senior"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{access_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const expect = pm.expect;
+      let j = null;
+      try { j = pm.response.json(); } catch (e) {}
+      pm.test("Status is 409", function () { expect(pm.response.code).to.eql(409); });
+      pm.test("Response is JSON", function () { expect(j).to.be.an("object"); });
+      pm.test("Error format {error, message, status}", function () { expect(j).to.have.all.keys("error", "message", "status"); expect(j.status).to.eql(409); });
+      pm.test("Message mentions: already exists", function () { expect(j.message).to.include("already exists"); });
+    language: text/javascript
+order: 19000

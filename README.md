@@ -20,6 +20,11 @@ PFE (Projet de Fin d'Études) reports and lets them explore topics.
 | `data.py` | Seed data: 8 students, 9 reports |
 | `postman/` | Postman collection + environment |
 | `insomnia/` | Insomnia collection (with environment) |
+| `Dockerfile` | Recipe for the Docker image (Python + gunicorn, port 5000) |
+| `docker-compose.yml` | Runs the container: port mapping + environment variables |
+| `.dockerignore` | Files kept out of the image (`.venv`, `.git`, `logs`, collections...) |
+| `.env.example` | Template for `.env` (JWT secret, token lifetime); `.env` itself is not committed |
+| `logs/DOCKER_LOG.md` | Step-by-step log of the Docker setup |
 
 ## Setup and run (Windows PowerShell)
 
@@ -51,6 +56,51 @@ Access tokens default to 5 minutes, refresh tokens to 1 day. Close the terminal 
 | `tbs_student` | `Pfe@2026` |
 
 Only scrypt hashes (`werkzeug.security`) are stored in `auth.py`.
+
+## Run with Docker
+
+Needs Docker Desktop running. No venv and no `pip install` are needed: everything is
+installed inside the container. `python app.py` still works the same way for local runs.
+
+**First time only**, create your `.env` file (it holds the JWT secret and is not committed):
+
+```powershell
+Copy-Item .env.example .env
+python -c "import secrets; print(secrets.token_hex(32))"   # paste the result as SECRET_KEY in .env
+```
+
+**Start and stop:**
+
+```powershell
+docker compose up --build        # build the image and start the API (Ctrl+C to stop)
+docker compose up --build -d     # same, but in the background
+docker compose down              # stop and remove the container
+```
+
+The API is on `http://127.0.0.1:5000`, so the Postman and Insomnia collections work unchanged.
+The server is gunicorn with debug off. It runs **one worker on purpose**, because the data
+lives in memory and must be shared by every request.
+
+**Change the token lifetime** (for example 30 seconds for the expiry demo). Either set
+`ACCESS_TOKEN_EXPIRES_SECONDS=30` in `.env`, or just for one run:
+
+```powershell
+$env:ACCESS_TOKEN_EXPIRES_SECONDS=30; docker compose up -d
+```
+
+`up` recreates the container with the new value, with no rebuild needed. Check it in the
+`access_expires_in` field of the login response. Run `Remove-Item Env:ACCESS_TOKEN_EXPIRES_SECONDS`
+and `docker compose up -d` again to go back to the `.env` value.
+
+**See the logs** (every request plus any error):
+
+```powershell
+docker compose logs -f           # Ctrl+C stops following; the API keeps running
+```
+
+**Reset the data** between Postman folders: `docker compose restart`.
+
+If you change the code, run `docker compose up --build` again so the image picks it up.
 
 ## Endpoints
 

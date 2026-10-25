@@ -2,7 +2,8 @@
 import os
 
 # Auto-reload while coding. Even when True, errors stay clean JSON (no stack trace).
-DEBUG = True
+# On for `python app.py`; Docker sets FLASK_DEBUG=0 to turn it off.
+DEBUG = os.environ.get("FLASK_DEBUG", "1") == "1"
 
 # Adds GET /debug/error, a route that crashes on purpose to demo the 500 handler.
 ENABLE_ERROR_DEMO_ROUTE = True

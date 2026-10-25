@@ -1,0 +1,14 @@
+# Start:  docker compose up --build      Stop:  docker compose down
+# Values come from the .env file next to this one (copy .env.example to .env).
+services:
+  api:
+    build: .
+    image: tbs-pfe-api
+    container_name: tbs-pfe-api
+    ports:
+      - "5000:5000"   # Windows port 5000 -> container port 5000
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is missing - copy .env.example to .env}
+      ACCESS_TOKEN_EXPIRES_SECONDS: ${ACCESS_TOKEN_EXPIRES_SECONDS:-300}
+      FLASK_DEBUG: "0"
+    restart: unless-stopped

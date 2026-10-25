@@ -1,0 +1,17 @@
+# Files Docker must NOT copy into the image (keeps it small and free of secrets).
+.venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+logs/
+postman/
+.postman/
+insomnia/
+.env
+.env.example
+.vscode/
+Dockerfile
+.dockerignore
+docker-compose.yml
+*.md

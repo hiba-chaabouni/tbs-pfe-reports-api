@@ -1,0 +1,35 @@
+﻿**********************
+Début de la transcription Windows PowerShell
+Heure de début : 20261025163917
+Nom d'utilisateur : HIBA\hibac
+Utilisateur runAs :  HIBA\hibac
+Nom de la configuration : 
+Ordinateur : HIBA (Microsoft Windows NT 10.0.26200.0)
+Application hôte : C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+ID de processus : 14220
+PSVersion: 5.1.26100.9711
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.9711
+BuildVersion: 10.0.26100.9711
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcription démarrée, le fichier de sortie est C:\Users\hibac\OneDrive\Bureau\OurAPI2026\logs\docker_setup_terminal.txt
+PS C:\WINDOWS\System32> docker --version
+Docker version 29.9.2, build a82e528
+PS C:\WINDOWS\System32> docker run hello-world
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+PS C:\WINDOWS\System32> Stop-Transcript
+**********************
+Fin de la transcription Windows PowerShell
+Heure de fin : 20261025164600
+**********************
